@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Amanah Ledger</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Firebase Auth & DB (Preparing for Central Brain Sync) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <div id="app">
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="onboarding-overlay" style="background: white; z-index: 100000; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+            <div style="width: 120px; height: 120px; background: var(--color-primary); border-radius: 24px; display:flex; justify-content:center; align-items:center; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                <div style="width: 60px; height: 60px; border: 4px solid var(--color-accent-gold); transform: rotate(45deg);"></div>
+            </div>
+            <h1 style="font-size: 2rem; color: var(--color-primary-dark); font-weight: 700;">Amanah Ledger</h1>
+        </div>
+        <p style="padding-bottom: 40px; color: var(--color-text-muted); font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">✨ Secure & Halal Tracking</p>
+    </div>
+
+    <!-- Login & Authentication Screen -->
+    <div id="login-screen" class="onboarding-overlay hidden" style="z-index: 99998; background: var(--color-background); justify-content: center; align-items: center;">
+        <div style="width: 100%; max-width: 320px; background: white; padding: 32px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); color: var(--color-text-main);">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 60px; height: 60px; background: var(--color-primary); border-radius: 16px; margin: 0 auto 16px; display:flex; justify-content:center; align-items:center;">
+                    <div style="width: 30px; height: 30px; border: 3px solid var(--color-accent-gold); transform: rotate(45deg);"></div>
+                </div>
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--color-primary-dark);">Amanah Account</h2>
+                <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-top: 4px;">Sign in to sync your ledger across devices.</p>
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap: 16px; align-items: flex-start; text-align: left;">
+                <div style="width: 100%;">
+                    <label class="input-label" style="color: var(--color-text-main);">Email</label>
+                    <input type="email" id="auth-email" placeholder="adam@amanah.com" class="styled-input" style="width:100%; margin-bottom:0;">
+                </div>
+                <div style="width: 100%;">
+                    <label class="input-label" style="color: var(--color-text-main);">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="styled-input" style="width:100%; margin-bottom:0;">
+                </div>
+                <button class="btn-action primary" style="background: var(--color-primary); width: 100%; margin-top: 8px;" onclick="app.loginUser()">Login / Sign Up</button>
+                <div style="width: 100%; text-align: center; color: var(--color-text-muted); font-size: 0.85rem; margin-top: 8px;">or</div>
+                <button class="btn-action primary" style="background: white; border: 1px solid #ddd; color: #333; width: 100%; margin-top: 8px; font-weight: 500; display:flex; align-items:center; justify-content:center; gap: 8px;" onclick="app.loginGoogle()">
+                   <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                   Sign in with Google
+                </button>
+                <div style="text-align: center; width: 100%; font-size: 0.8rem; color: rgba(0,0,0,0.4); margin-top: 8px;">
+                    <p>Powered by Firebase Cloud Sync</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Lock Screen Overlay -->
+    <div id="lock-screen" class="onboarding-overlay hidden" style="z-index: 99999;">
+        <div class="slide active">
+            <div class="slide-icon" style="font-size: 5rem;">🔒</div>
+            <h2>App Locked</h2>
+            <p>Amanah Ledger is secured with biometric protection.</p>
+            <button class="btn-onboarding mt-2" onclick="app.unlockApp()">Unlock with Biometrics</button>
+        </div>
+    </div>
+    <!-- Onboarding Overlay -->
+    <div id="onboarding-overlay" class="onboarding-overlay hidden">
+        <div class="onboarding-slides">
+            <div class="slide active" id="slide-1">
+                <div class="slide-icon">✨</div>
+                <h2>Welcome to Amanah</h2>
+                <p>The professional way to track trusts and financial responsibilities with integrity.</p>
+                <button class="btn-onboarding" onclick="app.nextSlide(2)">Next</button>
+            </div>
+            <div class="slide hidden" id="slide-2">
+                <div class="slide-icon">⚖️</div>
+                <h2>Two Sides of Trust</h2>
+                <p>Easily monitor what 'Others Owe Me' and what 'I Owe Others' on one clean dashboard.</p>
+                <button class="btn-onboarding" onclick="app.nextSlide(3)">Next</button>
+            </div>
+            <div class="slide hidden" id="slide-3">
+                <div class="slide-icon">🛡️</div>
+                <h2>100% Halal & Private</h2>
+                <p>Strictly Purity focused. No secular tracking, and no non-compliant structures. Just a pure digital ledger safely stored on your device.</p>
+                <button class="btn-onboarding" onclick="app.finishOnboarding()">Get Started</button>
+            </div>
+        </div>
+        <div class="slide-dots">
+            <span class="dot active" id="dot-1"></span>
+            <span class="dot" id="dot-2"></span>
+            <span class="dot" id="dot-3"></span>
+        </div>
+    </div>
+    
+    <!-- App Lock Screen Overlay -->
+        <!-- Top App Bar -->
+        <header class="app-header">
+            <div class="header-left">
+                <button id="btn-back" class="btn-icon hidden" onclick="app.navigateBack()">←</button>
+                <h1 id="screen-title">Amanah Ledger</h1>
+            </div>
+            <div class="header-actions">
+                <span id="date-display" class="date-badge"></span>
+            </div>
+        </header>
+
+        <div class="main-content-scroll">
+            <!-- View: Dashboard (Ledger) -->
+            <main id="view-dashboard" class="view active">
+                <div class="split-view">
+                    <div class="card summary-card left-card">
+                        <p class="subtext">Others Owe Me</p>
+                        <h2 id="total-receivables">₹0</h2>
+                    </div>
+                    <div class="card summary-card right-card">
+                        <p class="subtext">I Owe Others</p>
+                        <h2 id="total-liabilities">₹0</h2>
+                    </div>
+                </div>
+                
+                <div class="section-header" style="position:relative;">
+                    <h3>Contacts</h3>
+                    <div style="position:relative;">
+                        <button class="btn-text" onclick="app.showModal('transaction')">+ Add Record</button>
+                        <div id="nudge-tooltip" class="floating-tooltip hidden" onclick="app.dismissTutorial()" style="cursor: pointer;">Tap here to record your first Amanah!</div>
+                    </div>
+                </div>
+                <div id="contacts-empty" class="empty-state hidden">No records found. Start adding Amanah!</div>
+                <ul id="contacts-list" class="contact-list"></ul>
+            </main>
+
+            <!-- View: Contact Details -->
+            <main id="view-contact" class="view hidden">
+                <div class="contact-header card">
+                    <div class="avatar" id="contact-avatar">A</div>
+                    <h2 id="contact-name-title">Contact Name</h2>
+                    <p id="contact-net-balance" class="net-balance">Net: ₹0</p>
+                </div>
+                
+                <div class="section-header mt-2">
+                    <h3>Active Records</h3>
+                    <button class="btn-text" onclick="app.showModal('transaction')">+ Add</button>
+                </div>
+                <ul id="contact-history-list" class="history-list"></ul>
+                
+                <div id="settled-history-header" class="section-header mt-2 hidden">
+                    <h3>Settled Records</h3>
+                </div>
+                <ul id="contact-settled-list" class="history-list"></ul>
+                
+                <div class="action-spread mt-2" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <button id="btn-mark-paid" class="btn-action primary" style="grid-column: span 2; background: var(--color-accent-gold); color: var(--color-primary-dark);" onclick="app.settleAmanah()">Mark as Paid</button>
+                    <button class="btn-action primary" onclick="app.exportPDF()">PDF Statement</button>
+                    <button class="btn-action primary" style="background:#25D366;" onclick="app.generateNudge()">WhatsApp</button>
+                </div>
+            </main>
+
+            <!-- View: Zakat & Wealth -->
+            <main id="view-zakat" class="view hidden">
+                <section class="card zakat-widget">
+                    <div class="widget-header">
+                        <h2>Zakat Status</h2>
+                        <span class="nisab-badge">2026 Nisab: ₹1,374,000</span>
+                    </div>
+                    <div class="net-assets">
+                        <span class="label">Total Wealth (Assets + Receivables - Liabilities)</span>
+                        <h1 id="net-assets-display">₹0</h1>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="zakat-progress" class="progress-bar"></div>
+                    </div>
+                    <div class="zakat-due-container mt-2">
+                        <span class="label">Zakat Due (2.5%)</span>
+                        <h2 id="zakat-due-display">₹0</h2>
+                    </div>
+                    <p id="zakat-message" class="helper-text mt-1">Add your assets and liabilities starting strictly Halal tracking.</p>
+                </section>
+                
+                <div class="section-header mt-2">
+                    <h3>My Pure Assets (Cash & Gold)</h3>
+                    <button class="btn-text" onclick="app.showModal('asset')">+ Add Asset</button>
+                </div>
+                <ul id="assets-list" class="history-list"></ul>
+            </main>
+
+            <!-- View: Settings -->
+            <main id="view-settings" class="view hidden">
+                <section class="settings-group">
+                    <h3>App Settings</h3>
+                    
+                    <div class="setting-item" style="flex-direction:column; align-items:stretch;">
+                        <h4 style="color:var(--color-primary-dark); margin-bottom: 8px;">Global Finance Rules</h4>
+                        <div style="display:flex; gap:8px;">
+                            <select id="setting-currency" class="styled-select" style="margin-bottom:0; padding:12px;" onchange="app.updateSettings()">
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="INR">INR (₹)</option>
+                                <option value="SAR">SAR (﷼)</option>
+                                <option value="AED">AED (د.إ)</option>
+                            </select>
+                            <select id="setting-decimals" class="styled-select" style="margin-bottom:0; padding:12px;" onchange="app.updateSettings()">
+                                <option value="hide">Hide .00</option>
+                                <option value="show">Show .00</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-item" style="flex-direction:column; align-items:stretch;">
+                        <h4 style="color:var(--color-primary-dark); margin-bottom: 8px;">App Language</h4>
+                        <select id="setting-language" class="styled-select" style="margin-bottom:0; padding:12px;" onchange="app.updateSettings()">
+                            <option value="en">English</option>
+                            <option value="ar">Arabic (عربي)</option>
+                            <option value="es">Spanish (Español)</option>
+                            <option value="hi">Hindi (हिंदी)</option>
+                            <option value="ur">Urdu (اردو)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Hijri Calendar</h4>
+                            <p>Use Islamic lunar dates</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-hijri" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item premium-lock" onclick="app.openThemeStudio()">
+                        <div class="setting-info">
+                            <h4>Color Theme <span class="premium-badge">PRO</span></h4>
+                            <p>Change your main app colors</p>
+                        </div>
+                        <span class="icon">🎨</span>
+                    </div>
+
+                    <div class="setting-item premium-lock" onclick="app.toggleBiometric()">
+                        <div class="setting-info">
+                            <h4>Biometric Security <span class="premium-badge">PRO</span></h4>
+                            <p id="biometric-desc">Lock app with Fingerprint/FaceID</p>
+                        </div>
+                        <span class="icon" id="biometric-icon">🔓</span>
+                    </div>
+
+                    <div class="setting-item premium-lock" id="setting-backup" onclick="app.handleBackupClick()">
+                        <div class="setting-info">
+                            <h4>Cloud Backup Sync <span class="premium-badge" id="backup-badge">PRO</span></h4>
+                            <p id="backup-desc">Backup Amanah data securely</p>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top:4px;">Note: Backup creates a .json data file for app recovery.</p>
+                        </div>
+                        <span class="icon" id="backup-icon">☁️</span>
+                    </div>
+                    
+                    <div class="setting-item premium-lock" id="setting-restore" onclick="app.handleRestoreClick()">
+                        <div class="setting-info">
+                            <h4>Import Backup <span class="premium-badge">PRO</span></h4>
+                            <p>Recover records from device file</p>
+                        </div>
+                        <span class="icon">📥</span>
+                    </div>
+                    
+                    <!-- Hidden file input for restore -->
+                    <input type="file" id="file-restore-input" accept=".json" class="hidden" onchange="app.processRestore(event)">
+                </section>
+            </main>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+           <button class="nav-btn active" id="nav-dashboard" onclick="app.navigate('dashboard')">
+               <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+               <span>Ledger</span>
+           </button>
+           <button class="nav-btn" id="nav-zakat" onclick="app.navigate('zakat')">
+               <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.43-2.81 3.11-3.14V3.98h2.67v1.96c1.87.35 2.94 1.4 3.05 3.1h-1.99c-.1-1.01-.84-1.51-2.4-1.51-1.8 0-2.24.87-2.24 1.55 0 .8.54 1.44 2.82 2.03 2.5.65 4.03 1.57 4.03 3.8 0 1.98-1.61 2.95-3.27 3.18z"/></svg>
+               <span>Wealth</span>
+           </button>
+           <button class="nav-btn" id="nav-settings" onclick="app.navigate('settings')">
+               <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+               <span>Settings</span>
+           </button>
+        </nav>
+
+        <!-- Modals -->
+        <div id="item-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <button class="close-btn" style="float:left; margin-right:12px;" onclick="app.closeModal()">←</button>
+                    <h3 id="modal-title" style="flex:1;">Add Record</h3>
+                </div>
+                <div class="modal-body">
+                    <!-- Dynamic fields wrapper -->
+                    <div id="contact-field-group">
+                        <label class="input-label">Contact Name</label>
+                        <input type="text" id="item-contact" placeholder="e.g., Adam">
+                    </div>
+
+                    <div id="general-fields">
+                        <label class="input-label" id="desc-label">Description / Asset Name</label>
+                        <input type="text" id="item-desc" placeholder="e.g., Grocery, Petrol, Gold">
+                        
+                        <div id="amount-field-group">
+                            <label class="input-label">Amount</label>
+                            <input type="number" id="item-amount" placeholder="Amount">
+                        </div>
+                    </div>
+                    
+                    <div id="type-selector-group" class="type-toggles">
+                        <button class="type-toggle active" id="btn-type-receivable" onclick="app.setTransactionType('receivable')">They Owe Me</button>
+                        <button class="type-toggle" id="btn-type-liability" onclick="app.setTransactionType('liability')">I Owe Them</button>
+                    </div>
+
+                    <div id="zakat-category-section" class="hidden mt-1">
+                        <label class="input-label">Asset Category</label>
+                        <select id="item-category" class="styled-select" onchange="app.handleCategoryChange()">
+                            <option value="cash">Digital Assets / Cash</option>
+                            <option value="gold">Gold & Silver</option>
+                            <option value="business">Business Goods / Inventory</option>
+                            <option value="other">Other Assets</option>
+                        </select>
+                    </div>
+
+                    <div id="gold-silver-fields" class="hidden mt-1" style="background: rgba(212, 175, 55, 0.05); padding: 16px; border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.2); margin-bottom: 16px; display:flex; flex-direction:column; gap:12px;">
+                        <div style="display:flex; gap:12px;">
+                            <div style="flex:1;">
+                                <label class="input-label">Purity (Karat)</label>
+                                <select id="gold-karat" class="styled-select" onchange="app.calculateGoldValue()" style="margin-bottom:0;">
+                                    <option value="24">24K (Pure 99.9%)</option>
+                                    <option value="22">22K (91.6%)</option>
+                                    <option value="21">21K (87.5%)</option>
+                                    <option value="18">18K (75%)</option>
+                                </select>
+                            </div>
+                            <div style="flex:1;">
+                                <label class="input-label">Weight Unit</label>
+                                <select id="gold-unit" class="styled-select" onchange="app.calculateGoldValue()" style="margin-bottom:0;">
+                                    <option value="g">Grams (g)</option>
+                                    <option value="tola">Tolas</option>
+                                    <option value="oz">Ounces (oz)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:12px;">
+                            <div style="flex:1;">
+                                <label class="input-label">Total Weight</label>
+                                <input type="number" id="gold-weight" placeholder="e.g. 50" oninput="app.calculateGoldValue()" style="margin-bottom:0;">
+                            </div>
+                            <div style="flex:1;">
+                                <label class="input-label" style="font-size:0.75rem;">Current Price per Unit</label>
+                                <input type="number" id="gold-price-per-unit" placeholder="Price" oninput="app.calculateGoldValue()" style="margin-bottom:0;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="halal-notice mt-2">✨ Strictly Halal Tracking. Focused on Purity & Barakah.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-save w-full" onclick="app.saveItem()">Save Amanah</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Purchase Modal -->
+        <div id="premium-modal" class="modal-overlay hidden">
+            <div class="modal premium-modal-content">
+                <div class="modal-header">
+                    <button class="close-btn" style="float:left; margin-right:12px;" onclick="app.closePremiumModal()">←</button>
+                    <h3 style="flex:1;">Unlock Premium</h3>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="premium-icon">👑</div>
+                    <h4>Barakah Backup & Custom Themes</h4>
+                    <p>Securely sync your Amanah data professionally to Google Drive, unlock custom colors, biometric locks, and get priority support.</p>
+                    <div class="price-tag">₹499 / lifetime</div>
+                    <button id="btn-purchase" class="btn-purchase" onclick="app.processPurchase()">Purchase</button>
+                    <p id="purchase-status" class="helper-text hidden">Processing secure payment...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Guide 2: Premium Unlock Modal -->
+        <div id="guide-2-premium" class="modal-overlay hidden" style="z-index: 9999;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 style="color:var(--color-accent-gold);">Barakah Unlocked! 👑</h3>
+                    <button class="close-btn" onclick="document.getElementById('guide-2-premium').classList.add('hidden')">✕</button>
+                </div>
+                <div class="modal-body" style="line-height:1.8; font-size:1.05rem;">
+                    <p><strong>🎨 Personalize:</strong> Use Theme Studio to change your colors.</p>
+                    <p><strong>☁️ Sync:</strong> Your Google Drive backups are now active.</p>
+                    <p><strong>📄 Print:</strong> Export PDFs for Hubaib directly from the contact list.</p>
+                    <button class="btn-action primary w-full mt-2" style="background:var(--color-accent-gold); color:var(--color-primary-dark);" onclick="document.getElementById('guide-2-premium').classList.add('hidden')">Let's Go!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theme Studio Modal -->
+        <div id="theme-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <button class="close-btn" style="float:left; margin-right:12px;" onclick="app.closeThemeModal()">←</button>
+                    <h3 style="flex:1;">Theme Studio</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="card mb-2" id="theme-preview-card" style="background:var(--color-primary); color:white; text-align:center;">
+                        <h4 style="color:var(--color-accent-gold)">Live Preview</h4>
+                        <p style="opacity:0.9; font-size:0.85rem; padding-top:4px;">This is how your primary elements will look.</p>
+                        <button class="btn-action w-full mt-1" style="background:#fff; color:var(--color-primary); pointer-events:none;">Test Button</button>
+                    </div>
+
+                    <label class="input-label">Elite Presets</label>
+                    <div class="theme-grid">
+                        <button class="theme-swatch" style="background:#1B3022;" onclick="app.previewTheme('#1B3022')" title="Classic Amanah"></button>
+                        <button class="theme-swatch" style="background:#121212;" onclick="app.previewTheme('#121212')" title="Midnight Trust"></button>
+                        <button class="theme-swatch" style="background:#003366;" onclick="app.previewTheme('#003366')" title="Ocean Integrity"></button>
+                        <button class="theme-swatch" style="background:#4E342E;" onclick="app.previewTheme('#4E342E')" title="Earthly Assets"></button>
+                    </div>
+
+                    <label class="input-label mt-2">Custom Hex Code</label>
+                    <div style="display:flex; gap:12px;">
+                        <input type="text" id="custom-hex-input" placeholder="#HEXCODE" style="margin-bottom:0; text-transform:uppercase;" oninput="app.previewTheme(this.value)">
+                    </div>
+                </div>
+                <div class="modal-footer mt-2">
+                    <button class="btn-save w-full" onclick="app.applyTheme()">Save Theme</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
